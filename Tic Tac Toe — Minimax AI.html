@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tic Tac Toe — Game</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1d2a2f;
+      --line: #1d2a2f;
+      --x: #1f5f7a;
+      --o: #c2412d;
+      --cell: #fbf9f3;
+      --win: #ffe9a8;
+      --mute: #5d6a6e;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    @media (prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14191b;
+        --ink: #e9e6dc;
+        --line: #e9e6dc;
+        --x: #6fc0de;
+        --o: #ff8a73;
+        --cell: #1c2326;
+        --win: #4a4020;
+        --mute: #98a4a7
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #14191b;
+      --ink: #e9e6dc;
+      --line: #e9e6dc;
+      --x: #6fc0de;
+      --o: #ff8a73;
+      --cell: #1c2326;
+      --win: #4a4020;
+      --mute: #98a4a7
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans Thai", "Sarabun", system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center
+    }
+
+    main {
+      width: min(92vw, 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin: 0;
+      font-weight: 700
+    }
+
+    .pick {
+      display: flex;
+      gap: 8px
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer
+    }
+
+    .pick button {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600
+    }
+
+    .pick button.on {
+      background: var(--ink);
+      color: var(--bg)
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--x);
+      outline-offset: 2px
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--line);
+      padding: 6px;
+      border-radius: 8px
+    }
+
+    .c {
+      aspect-ratio: 1;
+      background: var(--cell);
+      border: 0;
+      font-size: clamp(2.6rem, 16vw, 4.2rem);
+      font-weight: 800;
+      border-radius: 3px
+    }
+
+    .c:disabled {
+      cursor: default
+    }
+
+    .c.X {
+      color: var(--x)
+    }
+
+    .c.O {
+      color: var(--o)
+    }
+
+    .c.w {
+      background: var(--win)
+    }
+
+    .c:not(:disabled):hover {
+      background: var(--win)
+    }
+
+    #st {
+      min-height: 1.6em;
+      font-size: 1.1rem;
+      font-weight: 600
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--mute);
+      font-size: .9rem
+    }
+
+    #reset {
+      padding: 8px 14px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600;
+      color: var(--ink)
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Tic Tac Toe · Minimax AI</h1>
+    <div class="pick" role="group" aria-label="เลือกลำดับ">
+      <button id="first" class="on">ฉันเริ่มก่อน (X)</button>
+      <button id="second">AI เริ่มก่อน (AI = X)</button>
+    </div>
+    <div id="board" role="grid"></div>
+    <div id="st" aria-live="polite"></div>
+    <div class="row"><span id="score">ชนะ 0 · เสมอ 0 · แพ้ 0</span><button
+        id="reset">เริ่มใหม่</button></div>
+  </main>
+  <script>
+    const L = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    let b, human, ai, over, humanFirst = true, sc = {w: 0, d: 0, l: 0};
+    const el = document.getElementById('board'), st = document.getElementById('st');
+
+    function winner(s) {for (const [a, c, d] of L) if (s[a] && s[a] === s[c] && s[a] === s[d]) return {p: s[a], line: [a, c, d]}; return null}
+    // Minimax + alpha-beta: AI maximizes, human minimizes. Prefer faster wins / slower losses.
+    function minimax(s, turn, depth, alpha, beta) {
+      const w = winner(s);
+      if (w) return w.p === ai ? 10 - depth : depth - 10;
+      if (s.every(Boolean)) return 0;
+      if (turn === ai) {
+        let best = -Infinity;
+        for (let i = 0; i < 9; i++)if (!s[i]) {s[i] = ai; best = Math.max(best, minimax(s, human, depth + 1, alpha, beta)); s[i] = null; alpha = Math.max(alpha, best); if (beta <= alpha) break}
+        return best
+      }
+      let best = Infinity;
+      for (let i = 0; i < 9; i++)if (!s[i]) {s[i] = human; best = Math.min(best, minimax(s, ai, depth + 1, alpha, beta)); s[i] = null; beta = Math.min(beta, best); if (beta <= alpha) break}
+      return best
+    }
+    function bestMove() {
+      let bs = -Infinity, mv = [];
+      for (let i = 0; i < 9; i++)if (!b[i]) {
+        b[i] = ai;
+        // alpha-beta ตัดกิ่งทำให้คะแนนของช่องอื่นไม่แม่นยำ จึงใช้ช่วงเต็มเพื่อเทียบค่าเท่ากันได้ถูกต้อง
+        const v = minimax(b, human, 1, -Infinity, Infinity); b[i] = null;
+        if (v > bs) {bs = v; mv = [i]} else if (v === bs) mv.push(i)
+      }
+      return mv[Math.floor(Math.random() * mv.length)]
+    }
+
+    function render(line = []) {
+      el.innerHTML = '';
+      b.forEach((v, i) => {
+        const c = document.createElement('button');
+        c.className = 'c' + (v ? ' ' + v : '') + (line.includes(i) ? ' w' : '');
+        c.textContent = v || ''; c.disabled = over || !!v; c.setAttribute('aria-label', 'ช่อง ' + (i + 1) + (v ? ' ' + v : ' ว่าง'));
+        c.onclick = () => play(i); el.appendChild(c)
+      })
+    }
+    function end() {
+      const w = winner(b); over = true;
+      if (w) {st.textContent = w.p === human ? 'คุณชนะ!' : 'AI ชนะ'; w.p === human ? sc.w++ : sc.l++}
+      else {st.textContent = 'เสมอ'; sc.d++}
+      document.getElementById('score').textContent = `ชนะ ${sc.w} · เสมอ ${sc.d} · แพ้ ${sc.l}`;
+      render(w ? w.line : [])
+    }
+    function aiTurn() {
+      const m = bestMove(); b[m] = ai;
+      if (winner(b) || b.every(Boolean)) return end();
+      st.textContent = 'ตาของคุณ (' + human + ')'; render()
+    }
+    function play(i) {
+      if (over || b[i]) return;
+      b[i] = human;
+      if (winner(b) || b.every(Boolean)) return end();
+      st.textContent = 'AI กำลังคิด...'; render();
+      setTimeout(aiTurn, 250)
+    }
+    function start() {
+      b = Array(9).fill(null); over = false;
+      human = humanFirst ? 'X' : 'O'; ai = humanFirst ? 'O' : 'X';
+      render();
+      if (humanFirst) st.textContent = 'ตาของคุณ (X)';
+      else {st.textContent = 'AI กำลังคิด...'; setTimeout(aiTurn, 250)}
+    }
+    function setOrder(f) {
+      humanFirst = f;
+      document.getElementById('first').classList.toggle('on', f);
+      document.getElementById('second').classList.toggle('on', !f); start()
+    }
+    document.getElementById('first').onclick = () => setOrder(true);
+    document.getElementById('second').onclick = () => setOrder(false);
+    document.getElementById('reset').onclick = start;
+    start();
+  </script>
+</body>
+
+</html>
