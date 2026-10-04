@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "tic-tac-toe",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-04",
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "DB",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+  "vars": {
+    "FIREBASE_PROJECT_ID": "poc-tic",
+    "FIREBASE_API_KEY": "AIzaSyCfFhj97nvPx8zDDQrtq1ZeSbPujyYvmTI"
+  }
+}
