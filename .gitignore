@@ -1,0 +1,26 @@
+# Secrets / credentials
+service-account.json
+serviceAccount*.json
+firebase-config.js
+.env
+.env.*
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+
+# Wrangler
+.wrangler/
+.dev.vars
+
+# Build / deps
+node_modules/
+dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
