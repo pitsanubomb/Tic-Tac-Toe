@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="icon" href="data:,">
+  <title>Tic Tac Toe — Game</title>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1d2a2f;
+      --line: #1d2a2f;
+      --x: #1f5f7a;
+      --o: #c2412d;
+      --cell: #fbf9f3;
+      --win: #ffe9a8;
+      --mute: #5d6a6e;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    @media (prefers-color-scheme:dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14191b;
+        --ink: #e9e6dc;
+        --line: #e9e6dc;
+        --x: #6fc0de;
+        --o: #ff8a73;
+        --cell: #1c2326;
+        --win: #4a4020;
+        --mute: #98a4a7
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #14191b;
+      --ink: #e9e6dc;
+      --line: #e9e6dc;
+      --x: #6fc0de;
+      --o: #ff8a73;
+      --cell: #1c2326;
+      --win: #4a4020;
+      --mute: #98a4a7
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans Thai", "Sarabun", system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center
+    }
+
+    main {
+      width: min(92vw, 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 18px 0
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin: 0;
+      font-weight: 700
+    }
+
+    .pick {
+      display: flex;
+      gap: 8px
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer
+    }
+
+    .pick button {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600
+    }
+
+    .pick button.on {
+      background: var(--ink);
+      color: var(--bg)
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--x);
+      outline-offset: 2px
+    }
+
+    #board,
+    #rboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      background: var(--line);
+      padding: 6px;
+      border-radius: 8px
+    }
+
+    .c {
+      aspect-ratio: 1;
+      background: var(--cell);
+      border: 0;
+      font-size: clamp(2.6rem, 16vw, 4.2rem);
+      font-weight: 800;
+      border-radius: 3px
+    }
+
+    .c:disabled {
+      cursor: default
+    }
+
+    .c.X {
+      color: var(--x)
+    }
+
+    .c.O {
+      color: var(--o)
+    }
+
+    .c.w {
+      background: var(--win)
+    }
+
+    .c.lm {
+      background: var(--win)
+    }
+
+    .c:not(:disabled):hover {
+      background: var(--win)
+    }
+
+    #st {
+      min-height: 1.6em;
+      font-size: 1.1rem;
+      font-weight: 600
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--mute);
+      font-size: .9rem
+    }
+
+    #reset {
+      padding: 8px 14px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600;
+      color: var(--ink)
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    #auth {
+      width: min(92vw, 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: stretch;
+      text-align: center
+    }
+
+    #auth h1 {
+      font-size: 1.4rem;
+      margin: 0;
+      font-weight: 700
+    }
+
+    #auth>p {
+      margin: 0;
+      color: var(--mute);
+      font-size: .95rem;
+      line-height: 1.6
+    }
+
+    #gbtn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 18px;
+      border: 2px solid var(--line);
+      background: var(--cell);
+      color: var(--ink);
+      border-radius: 6px;
+      font-weight: 600
+    }
+
+    #gbtn:hover {
+      background: var(--win)
+    }
+
+    #gbtn:disabled {
+      opacity: .6;
+      cursor: default
+    }
+
+    #gbtn svg {
+      width: 18px;
+      height: 18px;
+      flex: none
+    }
+
+    #authErr {
+      margin: 0;
+      color: var(--o);
+      font-size: .9rem;
+      line-height: 1.5;
+      min-height: 1.3em
+    }
+
+    .ubar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--mute);
+      font-size: .9rem
+    }
+
+    .ubar img {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      flex: none
+    }
+
+    .ubar span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    #out {
+      margin-left: auto;
+      padding: 6px 10px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--ink);
+      flex: none
+    }
+
+    .avatar-ini {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--x);
+      color: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      flex: none;
+      text-transform: uppercase
+    }
+
+    #lbList .avatar-ini {
+      width: 20px;
+      height: 20px;
+      font-size: .75rem
+    }
+
+    #apiWarn {
+      margin: -6px 0 0;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--o)
+    }
+
+    .hint {
+      margin: 0;
+      font-size: .78rem;
+      color: var(--mute)
+    }
+
+    .rgrp {
+      display: flex;
+      gap: 8px;
+      flex: none
+    }
+
+    #rewatch {
+      padding: 8px 14px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600;
+      color: var(--ink)
+    }
+
+    #rewatch:hover {
+      background: var(--win)
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .tab {
+      flex: 1;
+      min-width: 68px;
+      padding: 8px 6px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: .9rem;
+      color: var(--ink)
+    }
+
+    .tab.on {
+      background: var(--ink);
+      color: var(--bg)
+    }
+
+    #scr-play {
+      display: contents
+    }
+
+    .arow {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 4px
+    }
+
+    .arow1,
+    .arow2 {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .arow1 .aname {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+      color: var(--ink)
+    }
+
+    .arow1 .hdate {
+      margin-left: auto
+    }
+
+    .arow2 {
+      font-size: .8rem;
+      color: var(--mute)
+    }
+
+    .arow2 .audit {
+      font-size: .72rem
+    }
+
+    .arow .avatar-ini,
+    .arow img {
+      width: 22px;
+      height: 22px;
+      font-size: .75rem
+    }
+
+    .arow img {
+      border-radius: 50%;
+      flex: none
+    }
+
+    .sgrp {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .audit {
+      font-size: .78rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid currentColor
+    }
+
+    .audit.ok {
+      color: #2f7d4f
+    }
+
+    .audit.bad {
+      color: var(--o)
+    }
+
+    .audit.center {
+      display: flex;
+      justify-content: center;
+      text-align: center
+    }
+
+    #hist h2,
+    #lb h2,
+    #scr-adm h2 {
+      font-size: .95rem;
+      margin: 0 0 6px;
+      color: var(--mute);
+      font-weight: 700
+    }
+
+    #histList,
+    #lbList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .hrow {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: var(--cell);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      text-align: left;
+      font-size: .85rem
+    }
+
+    .hrow:hover {
+      background: var(--win)
+    }
+
+    .hres {
+      font-weight: 800;
+      width: 1.2em;
+      flex: none;
+      text-align: center
+    }
+
+    .hres.w {
+      color: var(--x)
+    }
+
+    .hres.l {
+      color: var(--o)
+    }
+
+    .hres.d {
+      color: var(--mute)
+    }
+
+    .hmeta {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .hdate {
+      color: var(--mute);
+      font-size: .78rem;
+      flex: none
+    }
+
+    .hempty {
+      color: var(--mute);
+      font-size: .85rem
+    }
+
+    #lbList li {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: .85rem;
+      padding: 4px 2px
+    }
+
+    #lbList img {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      flex: none
+    }
+
+    .lbrank {
+      color: var(--mute);
+      width: 1.4em;
+      flex: none
+    }
+
+    .lbname {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
+
+    .lbw {
+      color: var(--mute);
+      font-weight: 700;
+      flex: none
+    }
+
+    #replay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 20
+    }
+
+    .rpanel {
+      background: var(--bg);
+      border: 2px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+      width: min(94vw, 380px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .rhead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700
+    }
+
+    #rpClose {
+      border: 0;
+      background: transparent;
+      font-size: 1rem;
+      color: var(--mute);
+      padding: 4px 8px
+    }
+
+    .rctrl {
+      display: flex;
+      gap: 8px;
+      justify-content: center
+    }
+
+    .rctrl button {
+      min-width: 44px;
+      padding: 8px 12px;
+      border: 2px solid var(--line);
+      background: transparent;
+      border-radius: 6px;
+      font-weight: 700;
+      color: var(--ink)
+    }
+
+    .rctrl button:hover {
+      background: var(--win)
+    }
+
+    .rpos {
+      text-align: center;
+      color: var(--mute);
+      font-size: .85rem
+    }
+  </style>
+</head>
+
+<body>
+  <section id="auth" aria-labelledby="authttl">
+    <h1 id="authttl">Tic Tac Toe · Minimax AI</h1>
+    <p>เข้าสู่ระบบก่อนเริ่มเล่นเกม</p>
+    <button id="gbtn" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <path fill="#EA4335"
+          d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+        <path fill="#4285F4"
+          d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+        <path fill="#FBBC05"
+          d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+        <path fill="#34A853"
+          d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+      </svg>
+      <span id="glabel">เข้าสู่ระบบด้วย Google</span>
+    </button>
+    <p id="authErr" role="alert"></p>
+    <p class="hint">เปิดผ่าน http://localhost:8787 เท่านั้น</p>
+  </section>
+  <main id="game" hidden>
+    <h1>Tic Tac Toe · Minimax AI</h1>
+    <div class="ubar"><img id="uimg" alt="" hidden><span id="uini" class="avatar-ini" hidden></span><span
+        id="uname"></span><button id="out"
+        type="button">ออกจากระบบ</button></div>
+    <nav class="tabs" role="tablist" aria-label="เมนู">
+      <button id="tab-play" class="tab on" type="button" role="tab" aria-selected="true">เล่น</button>
+      <button id="tab-hist" class="tab" type="button" role="tab" aria-selected="false">ประวัติ</button>
+      <button id="tab-lb" class="tab" type="button" role="tab" aria-selected="false">อันดับ</button>
+      <button id="tab-adm" class="tab" type="button" role="tab" aria-selected="false">ตรวจสอบ</button>
+    </nav>
+    <p id="apiWarn" role="status" hidden></p>
+    <section id="scr-play">
+      <div class="pick" role="group" aria-label="เลือกลำดับ">
+        <button id="first" class="on">ฉันเริ่มก่อน (X)</button>
+        <button id="second">AI เริ่มก่อน (AI = X)</button>
+      </div>
+      <div id="board" role="grid"></div>
+      <div id="st" aria-live="polite"></div>
+      <div class="row">
+        <span class="sgrp"><span id="score">คะแนน 0 · ชนะ 0 · เสมอ 0 · แพ้ 0</span><span id="audit" class="audit"
+            hidden></span></span>
+        <span class="rgrp"><button id="rewatch" hidden>▶ ดูซ้ำ</button><button id="reset">เริ่มใหม่</button></span>
+      </div>
+    </section>
+    <section id="hist" hidden aria-label="ประวัติเกม">
+      <h2>ประวัติเกม</h2>
+      <ul id="histList"></ul>
+    </section>
+    <section id="lb" hidden aria-label="อันดับคะแนน">
+      <h2>อันดับคะแนน</h2>
+      <ol id="lbList"></ol>
+    </section>
+    <section id="scr-adm" hidden aria-label="ตรวจสอบเกม">
+      <h2>ตรวจสอบเกมทั้งหมด</h2>
+      <p class="hint">ตรวจผลใหม่จากบันทึกการเดินของทุกเกม — คลิกแถวเพื่อดู replay</p>
+      <ul id="admList"></ul>
+    </section>
+  </main>
+  <div id="replay" hidden role="dialog" aria-modal="true" aria-labelledby="rpttl">
+    <div class="rpanel">
+      <div class="rhead"><span id="rpTitle" aria-live="polite">ดูการเล่นซ้ำ</span><button id="rpClose"
+          type="button" aria-label="ปิด">✕</button></div>
+      <div id="rboard" role="grid" aria-label="กระดานเล่นซ้ำ"></div>
+      <div id="rpPos" class="rpos"></div>
+      <div id="rpLegend" class="rpos"></div>
+      <div class="rctrl">
+        <button id="rpReset" type="button" title="เริ่มซ้ำ" aria-label="เริ่มซ้ำ">⟲</button>
+        <button id="rpPrev" type="button" title="ย้อนหนึ่งเดิน" aria-label="ย้อนหนึ่งเดิน">◀</button>
+        <button id="rpPlay" type="button" title="เล่นหรือหยุด" aria-label="เล่นหรือหยุด">เล่น</button>
+        <button id="rpNext" type="button" title="เดินถัดไป" aria-label="เดินถัดไป">▶</button>
+      </div>
+      <div id="rpAudit" class="audit center" hidden></div>
+    </div>
+  </div>
+  <script>
+    const L = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+    let b, human, ai, over, humanFirst = true, sc = {w: 0, d: 0, l: 0, score: 0, streak: 0}, authed = false,
+      log = [], aiThinking = false, gen = 0, endCb = null;
+    const el = document.getElementById('board'), st = document.getElementById('st');
+
+    function winner(s) {for (const [a, c, d] of L) if (s[a] && s[a] === s[c] && s[a] === s[d]) return {p: s[a], line: [a, c, d]}; return null}
+    // Minimax + alpha-beta: AI maximizes, human minimizes. Prefer faster wins / slower losses.
+    function minimax(s, turn, depth, alpha, beta) {
+      const w = winner(s);
+      if (w) return w.p === ai ? 10 - depth : depth - 10;
+      if (s.every(Boolean)) return 0;
+      if (turn === ai) {
+        let best = -Infinity;
+        for (let i = 0; i < 9; i++)if (!s[i]) {s[i] = ai; best = Math.max(best, minimax(s, human, depth + 1, alpha, beta)); s[i] = null; alpha = Math.max(alpha, best); if (beta <= alpha) break}
+        return best
+      }
+      let best = Infinity;
+      for (let i = 0; i < 9; i++)if (!s[i]) {s[i] = human; best = Math.min(best, minimax(s, ai, depth + 1, alpha, beta)); s[i] = null; beta = Math.min(beta, best); if (beta <= alpha) break}
+      return best
+    }
+    function bestMove() {
+      let bs = -Infinity, mv = [];
+      for (let i = 0; i < 9; i++)if (!b[i]) {
+        b[i] = ai;
+        // alpha-beta ตัดกิ่งทำให้คะแนนของช่องอื่นไม่แม่นยำ จึงใช้ช่วงเต็มเพื่อเทียบค่าเท่ากันได้ถูกต้อง
+        const v = minimax(b, human, 1, -Infinity, Infinity); b[i] = null;
+        if (v > bs) {bs = v; mv = [i]} else if (v === bs) mv.push(i)
+      }
+      return mv[Math.floor(Math.random() * mv.length)]
+    }
+
+    function render(line = []) {
+      el.innerHTML = '';
+      b.forEach((v, i) => {
+        const c = document.createElement('button');
+        c.className = 'c' + (v ? ' ' + v : '') + (line.includes(i) ? ' w' : '');
+        c.textContent = v || ''; c.disabled = over || !!v || aiThinking;
+        c.setAttribute('aria-label', 'ช่อง ' + (i + 1) + (v ? ' ' + v : ' ว่าง'));
+        c.onclick = () => play(i); el.appendChild(c)
+      })
+    }
+    function renderScore() {
+      document.getElementById('score').textContent = `คะแนน ${sc.score} · ชนะ ${sc.w} · เสมอ ${sc.d} · แพ้ ${sc.l}`
+    }
+    // +1 ชนะ, -1 แพ้, เสมอ 0; โบนัส +1 ทุกๆ ชนะติดกัน 3 ครั้ง; คะแนนไม่ต่ำกว่า 0
+    function applyResult(r) {
+      if (r === 'w') {sc.streak++; sc.score++; if (sc.streak % 3 === 0) sc.score++}
+      else if (r === 'l') {sc.streak = 0; sc.score--}
+      else sc.streak = 0;
+      sc.score = Math.max(sc.score, 0)
+    }
+    function end() {
+      const w = winner(b); over = true; aiThinking = false;
+      let res;
+      if (w) {st.textContent = w.p === human ? 'คุณชนะ!' : 'AI ชนะ'; if (w.p === human) {sc.w++; res = 'w'} else {sc.l++; res = 'l'}}
+      else {st.textContent = 'เสมอ'; sc.d++; res = 'd'}
+      applyResult(res);
+      renderScore();
+      render(w ? w.line : []);
+      if (endCb) endCb({result: res, human_first: humanFirst ? 1 : 0, moves: log.slice()})
+    }
+    function sched(fn, ms) {const g = gen; setTimeout(() => {if (g === gen) fn()}, ms)}
+    function aiTurn() {
+      aiThinking = false;
+      if (over) return;
+      const m = bestMove(); b[m] = ai; log.push(m);
+      if (winner(b) || b.every(Boolean)) return end();
+      st.textContent = 'ตาของคุณ (' + human + ')'; render()
+    }
+    function play(i) {
+      if (!authed || over || aiThinking || b[i]) return;
+      b[i] = human; log.push(i);
+      if (winner(b) || b.every(Boolean)) return end();
+      aiThinking = true;
+      st.textContent = 'AI กำลังคิด...'; render();
+      sched(aiTurn, 250)
+    }
+    function start() {
+      gen++; b = Array(9).fill(null); over = false; log = []; aiThinking = false;
+      human = humanFirst ? 'X' : 'O'; ai = humanFirst ? 'O' : 'X';
+      render();
+      if (humanFirst) st.textContent = 'ตาของคุณ (X)';
+      else {aiThinking = true; st.textContent = 'AI กำลังคิด...'; render(); sched(aiTurn, 250)}
+    }
+    function setOrder(f) {
+      humanFirst = f;
+      document.getElementById('first').classList.toggle('on', f);
+      document.getElementById('second').classList.toggle('on', !f); start()
+    }
+    // คำนวณผลใหม่จากบันทึกการเดิน — ใช้ตรวจในหน้าเล่นซ้ำ
+    function computeGameResult(moves, hf) {
+      const hv = hf ? 'X' : 'O', av = hf ? 'O' : 'X';
+      const first = hf ? hv : av;
+      const board = Array(9).fill(null);
+      let illegal = null, winIdx = -1, line = [];
+      for (let i = 0; i < moves.length; i++) {
+        const c = moves[i];
+        if (!Number.isInteger(c) || c < 0 || c > 8) {if (!illegal) illegal = 'ช่องไม่ถูกต้อง'; break}
+        if (board[c]) {if (!illegal) illegal = 'เดินซ้ำที่ช่อง ' + (c + 1); break}
+        board[c] = i % 2 === 0 ? first : (first === hv ? av : hv);
+        const w = winner(board);
+        if (w && winIdx < 0) {winIdx = i; line = w.line; if (i < moves.length - 1) illegal = 'เดินต่อหลังมีผู้ชนะ'}
+      }
+      let result = null;
+      if (!illegal) {
+        if (winIdx >= 0) result = board[line[0]] === hv ? 'w' : 'l';
+        else if (board.every(Boolean)) result = 'd';
+        else illegal = 'เกมไม่จบ'
+      }
+      return {illegal, result, line, board}
+    }
+    document.getElementById('first').onclick = () => setOrder(true);
+    document.getElementById('second').onclick = () => setOrder(false);
+    document.getElementById('reset').onclick = start;
+    window.gameGate = {
+      enter() {authed = true; start()},
+      lock() {authed = false},
+      onEnd(cb) {endCb = cb},
+      setScore(s) {sc = {w: s.w | 0, d: s.d | 0, l: s.l | 0, score: s.score | 0, streak: s.streak | 0}; renderScore()}
+    };
+  </script>
+  <script type="module">
+    const authEl = document.getElementById('auth'),
+      gameEl = document.getElementById('game'),
+      errEl = document.getElementById('authErr'),
+      gbtn = document.getElementById('gbtn'),
+      glabel = document.getElementById('glabel'),
+      uimg = document.getElementById('uimg'),
+      uini = document.getElementById('uini'),
+      uname = document.getElementById('uname'),
+      auditEl = document.getElementById('audit'),
+      warnEl = document.getElementById('apiWarn'),
+      histList = document.getElementById('histList'),
+      lbSec = document.getElementById('lb'),
+      lbList = document.getElementById('lbList'),
+      rpOv = document.getElementById('replay'),
+      rboard = document.getElementById('rboard'),
+      rpPos = document.getElementById('rpPos'),
+      rpPlay = document.getElementById('rpPlay'),
+      rpPrev = document.getElementById('rpPrev'),
+      rpNext = document.getElementById('rpNext'),
+      rpReset = document.getElementById('rpReset'),
+      rpClose = document.getElementById('rpClose'),
+      rpTitle = document.getElementById('rpTitle'),
+      rpAudit = document.getElementById('rpAudit'),
+      rpLegend = document.getElementById('rpLegend'),
+      rewatchBtn = document.getElementById('rewatch'),
+      admList = document.getElementById('admList');
+
+    const tabsDef = [
+      ['tab-play', 'scr-play'],
+      ['tab-hist', 'hist'],
+      ['tab-lb', 'lb'],
+      ['tab-adm', 'scr-adm']
+    ];
+    const ADM_LABEL = {ok: '✓ ปกติ', result_mismatch: '✗ ผลไม่ตรง', illegal_moves: '✗ เดินผิดปกติ'};
+
+    const MSG = {
+      'auth/popup-blocked': 'เบราว์เซอร์บล็อกป๊อปอัป กรุณาอนุญาตป๊อปอัปของเว็บนี้แล้วลองใหม่',
+      'auth/popup-closed-by-user': 'ปิดป๊อปอัปไปแล้ว — ลองใหม่อีกครั้ง',
+      'auth/cancelled-popup-request': 'ปิดป๊อปอัปไปแล้ว — ลองใหม่อีกครั้ง',
+      'auth/unauthorized-domain': 'โดเมนนี้ยังไม่ได้เพิ่มใน Firebase → Authentication → Authorized domains',
+      'auth/invalid-api-key': 'Firebase config ไม่ถูกต้อง (invalid API key)',
+      'auth/operation-not-allowed': 'ยังไม่ได้เปิดใช้งาน Google provider ใน Firebase Console',
+      'auth/network-request-failed': 'เชื่อมต่อเครือข่ายไม่ได้',
+      'auth/configuration-not-found': 'ยังไม่ได้เปิดใช้งาน Google provider ใน Firebase Console'
+    };
+
+    let auth = null, idToken = null, histGames = [], lastLocal = null, admGames = [];
+
+    function showTab(scr) {
+      for (const [tid, sid] of tabsDef) {
+        const t = document.getElementById(tid), s = document.getElementById(sid);
+        const on = sid === scr;
+        t.classList.toggle('on', on);
+        t.setAttribute('aria-selected', on);
+        s.hidden = !on
+      }
+      if (scr === 'hist') loadHistory();
+      else if (scr === 'lb') loadLeaderboard();
+      else if (scr === 'scr-adm') loadAdmin()
+    }
+    tabsDef.forEach(([tid, sid]) => {document.getElementById(tid).onclick = () => showTab(sid)});
+
+    function fail(m) {errEl.textContent = m}
+    function apiFail(msg) {warnEl.textContent = '⚠ ' + msg; warnEl.hidden = false}
+    function apiOk() {warnEl.hidden = true; warnEl.textContent = ''}
+    function setAvatar(photo, name) {
+      uini.hidden = true;
+      uimg.onerror = null;
+      if (photo) {
+        uimg.onerror = () => showInitial(name);
+        uimg.src = photo;
+        uimg.hidden = false
+      } else showInitial(name)
+    }
+    function showInitial(name) {
+      uimg.hidden = true;
+      uimg.removeAttribute('src');
+      uini.textContent = (name || '?').trim().charAt(0) || '?';
+      uini.hidden = false
+    }
+    function busy(on) {
+      gbtn.disabled = on;
+      glabel.textContent = on ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบด้วย Google'
+    }
+    function fmtScore(x) {return `คะแนน ${x.score ?? 0} · ชนะ ${x.w} · เสมอ ${x.d} · แพ้ ${x.l}`}
+    function label(r) {return r === 'w' ? 'คุณชนะ' : r === 'l' ? 'AI ชนะ' : 'เสมอ'}
+    function fmtDate(s) {
+      const d = new Date(s.replace(' ', 'T') + 'Z');
+      return d.toLocaleString('th-TH', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'})
+    }
+    function setAudit(a) {
+      auditEl.hidden = false;
+      auditEl.className = 'audit ' + (a.consistent ? 'ok' : 'bad');
+      auditEl.textContent = a.consistent ? '✓ คะแนนถูกต้อง' : '✗ คะแนนไม่ตรง';
+      auditEl.title = `ตารางเกม ${fmtScore(a.games)} · ตารางคะแนน ${fmtScore(a.scores)}`
+    }
+
+    async function api(path, opts = {}) {
+      if (!auth || !auth.currentUser) throw new Error('no user');
+      if (!idToken) idToken = await auth.currentUser.getIdToken();
+      const doFetch = () => fetch(path, {
+        method: opts.method || 'GET',
+        headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + idToken},
+        body: opts.body
+      });
+      let r = await doFetch();
+      if (r.status === 401) {
+        idToken = await auth.currentUser.getIdToken(true);
+        r = await doFetch();
+      }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json()
+    }
+
+    async function syncSession() {
+      try {
+        const s = await api('/api/session', {method: 'POST'});
+        window.gameGate.setScore(s.score);
+        setAudit(s.audit);
+        apiOk();
+        await Promise.all([loadHistory(), loadLeaderboard()])
+      } catch (e) {
+        console.warn('session sync failed:', e);
+        apiFail('ซิงก์คะแนนไม่สำเร็จ — กด F5 ลองใหม่')
+      }
+    }
+    async function postGame(g) {
+      try {
+        const r = await api('/api/game', {method: 'POST', body: JSON.stringify(g)});
+        window.gameGate.setScore(r.score);
+        setAudit(r.audit);
+        apiOk();
+        await Promise.all([loadHistory(), loadLeaderboard()])
+      } catch (e) {
+        console.warn('game post failed:', e);
+        apiFail('บันทึกผลเกมไม่สำเร็จ')
+      }
+    }
+    async function loadHistory() {
+      try {
+        const r = await api('/api/history?limit=10');
+        renderHistory(r.games || [])
+      } catch (e) {
+        console.warn('history load failed:', e);
+        apiFail('โหลดประวัติไม่สำเร็จ — กด F5 ลองใหม่')
+      }
+    }
+    async function loadLeaderboard() {
+      try {
+        const r = await api('/api/leaderboard');
+        renderLeaderboard(r.top || [])
+      } catch (e) {
+        console.warn('leaderboard load failed:', e);
+        apiFail('โหลดอันดับไม่สำเร็จ — กด F5 ลองใหม่')
+      }
+    }
+    async function loadAdmin() {
+      try {
+        const r = await api('/api/admin/games?limit=50');
+        renderAdmin(r.games || [])
+      } catch (e) {
+        console.warn('admin load failed:', e);
+        apiFail('โหลดข้อมูลตรวจสอบไม่สำเร็จ — กด F5 ลองใหม่')
+      }
+    }
+
+    function rowAvatar(photo, name) {
+      const ini = document.createElement('span');
+      ini.className = 'avatar-ini';
+      ini.textContent = (name || '?').trim().charAt(0) || '?';
+      if (!photo) return ini;
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = photo;
+      img.onerror = () => img.replaceWith(ini);
+      return img
+    }
+
+    function renderHistory(games) {
+      histGames = games;
+      histList.innerHTML = '';
+      if (!games.length) {
+        const li = document.createElement('li');
+        li.className = 'hempty';
+        li.textContent = 'ยังไม่มีเกม — เล่นเสร็จแล้วจะแสดงที่นี่';
+        histList.appendChild(li);
+        return
+      }
+      games.forEach((g, i) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'hrow';
+        btn.dataset.i = i;
+        const res = document.createElement('span');
+        res.className = 'hres ' + g.result;
+        res.textContent = g.result === 'w' ? '✓' : g.result === 'l' ? '✗' : '–';
+        const meta = document.createElement('span');
+        meta.className = 'hmeta';
+        meta.textContent = (g.human_first ? 'คุณเริ่มก่อน' : 'AI เริ่มก่อน') + ' · ' + g.moves.length + ' เดิน';
+        const dt = document.createElement('span');
+        dt.className = 'hdate';
+        dt.textContent = fmtDate(g.created_at);
+        btn.append(res, meta, dt);
+        li.appendChild(btn);
+        histList.appendChild(li)
+      })
+    }
+    function renderLeaderboard(top) {
+      lbList.innerHTML = '';
+      if (!top.length) {
+        const li = document.createElement('li');
+        li.className = 'hempty';
+        li.textContent = 'ยังไม่มีคะแนน';
+        lbList.appendChild(li);
+        return
+      }
+      top.forEach((u, i) => {
+        const li = document.createElement('li');
+        const rank = document.createElement('span');
+        rank.className = 'lbrank';
+        rank.textContent = (i + 1) + '.';
+        const nm = document.createElement('span');
+        nm.className = 'lbname';
+        nm.textContent = u.name || 'ผู้เล่น';
+        const w = document.createElement('span');
+        w.className = 'lbw';
+        w.textContent = 'คะแนน ' + (u.score | 0) + ' · ชนะ ' + u.wins;
+        li.append(rank, rowAvatar(u.photo, u.name), nm, w);
+        lbList.appendChild(li)
+      })
+    }
+
+    function renderAdmin(games) {
+      admGames = games;
+      admList.innerHTML = '';
+      if (!games.length) {
+        const li = document.createElement('li');
+        li.className = 'hempty';
+        li.textContent = 'ยังไม่มีเกมในระบบ';
+        admList.appendChild(li);
+        return
+      }
+      games.forEach((g, i) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'hrow arow';
+        btn.dataset.i = i;
+        const r1 = document.createElement('span');
+        r1.className = 'arow1';
+        const nm = document.createElement('span');
+        nm.className = 'aname';
+        nm.textContent = g.name || 'ผู้เล่น';
+        const dt = document.createElement('span');
+        dt.className = 'hdate';
+        dt.textContent = fmtDate(g.created_at);
+        r1.append(rowAvatar(g.photo, g.name), nm, dt);
+        const r2 = document.createElement('span');
+        r2.className = 'arow2';
+        const res = document.createElement('span');
+        res.className = 'hres ' + g.result;
+        res.textContent = g.result === 'w' ? '✓' : g.result === 'l' ? '✗' : '–';
+        const mv = document.createElement('span');
+        mv.textContent = (g.human_first ? 'ผู้เล่นเริ่มก่อน' : 'AI เริ่มก่อน') + ' · ' + g.moves.length + ' เดิน';
+        const badge = document.createElement('span');
+        badge.className = 'audit ' + (g.status === 'ok' ? 'ok' : 'bad');
+        badge.textContent = ADM_LABEL[g.status] || g.status;
+        r2.append(res, mv, badge);
+        btn.append(r1, r2);
+        li.appendChild(btn);
+        admList.appendChild(li)
+      })
+    }
+    admList.onclick = e => {
+      const btn = e.target.closest('[data-i]');
+      if (btn) openReplay(admGames[+btn.dataset.i])
+    };
+
+    const R = {g: null, k: 0, timer: 0, playing: false};
+    function openReplay(g) {
+      if (!g) return;
+      R.g = g; R.k = 0;
+      rpTitle.textContent = 'ดูซ้ำ · ' + label(g.result) + ' · ' + g.moves.length + ' เดิน';
+      rpLegend.textContent = g.human_first ? 'คุณ = X · AI = O' : 'คุณ = O · AI = X';
+      rpOv.hidden = false;
+      drawReplay();
+      startPlay()
+    }
+    function closeReplay() {stopPlay(); rpOv.hidden = true; R.g = null}
+    function stopPlay() {
+      if (R.timer) clearInterval(R.timer);
+      R.timer = 0;
+      R.playing = false;
+      rpPlay.textContent = 'เล่น'
+    }
+    function startPlay() {
+      if (!R.g) return;
+      if (R.k >= R.g.moves.length) {R.k = 0; drawReplay()}
+      R.playing = true;
+      rpPlay.textContent = 'หยุด';
+      R.timer = setInterval(() => {
+        R.k++;
+        drawReplay();
+        if (R.k >= R.g.moves.length) stopPlay()
+      }, 700)
+    }
+    function drawReplay() {
+      const g = R.g;
+      if (!g) return;
+      const hv = g.human_first ? 'X' : 'O', av = hv === 'X' ? 'O' : 'X';
+      const first = g.human_first ? hv : av;
+      const board = Array(9).fill(null);
+      for (let i = 0; i < R.k && i < g.moves.length; i++) {
+        const c = g.moves[i];
+        if (c >= 0 && c <= 8 && !board[c]) board[c] = i % 2 ? (first === hv ? av : hv) : first
+      }
+      const done = R.k >= g.moves.length;
+      const a = done ? computeGameResult(g.moves, !!g.human_first) : null;
+      const line = a && !a.illegal ? a.line : [];
+      const last = R.k > 0 ? g.moves[R.k - 1] : -1;
+      rboard.innerHTML = '';
+      for (let i = 0; i < 9; i++) {
+        const c = document.createElement('button');
+        c.className = 'c' + (board[i] ? ' ' + board[i] : '');
+        if (line.includes(i)) c.className += ' w';
+        else if (i === last) c.className += ' lm';
+        c.textContent = board[i] || '';
+        c.disabled = true;
+        c.setAttribute('aria-label', 'ช่อง ' + (i + 1) + (board[i] ? ' ' + board[i] : ' ว่าง'));
+        rboard.appendChild(c)
+      }
+      rpPos.textContent = 'เดิน ' + R.k + '/' + g.moves.length;
+      if (done && a) {
+        rpAudit.hidden = false;
+        let cls, txt;
+        if (a.illegal) {cls = 'bad'; txt = '✗ ' + a.illegal}
+        else if (a.result === g.result) {cls = 'ok'; txt = '✓ ผลตรงกับฐานข้อมูล (' + label(a.result) + ')'}
+        else {cls = 'bad'; txt = '✗ ไม่ตรง — DB: ' + label(g.result) + ' / คำนวณใหม่: ' + label(a.result)}
+        rpAudit.className = 'audit center ' + cls;
+        rpAudit.textContent = txt
+      } else {
+        rpAudit.hidden = true
+      }
+    }
+
+    rpPlay.onclick = () => R.playing ? stopPlay() : startPlay();
+    rpPrev.onclick = () => {stopPlay(); if (R.g && R.k > 0) {R.k--; drawReplay()}};
+    rpNext.onclick = () => {stopPlay(); if (R.g && R.k < R.g.moves.length) {R.k++; drawReplay()}};
+    rpReset.onclick = () => {stopPlay(); if (R.g) {R.k = 0; drawReplay()}};
+    rpClose.onclick = closeReplay;
+    rewatchBtn.onclick = () => openReplay(lastLocal);
+    rpOv.onclick = e => {if (e.target === rpOv) closeReplay()};
+    document.addEventListener('keydown', e => {if (e.key === 'Escape' && !rpOv.hidden) closeReplay()});
+    histList.onclick = e => {
+      const btn = e.target.closest('[data-i]');
+      if (btn) openReplay(histGames[+btn.dataset.i])
+    };
+    window.addEventListener('replay:open', e => openReplay(e.detail));
+    window.addEventListener('qa:show', e => showGame(e.detail || {displayName: 'Test User', photoURL: null}));
+    window.addEventListener('admin:data', e => renderAdmin(e.detail || []));
+
+    function showAuth() {
+      window.gameGate.lock();
+      gameEl.hidden = true;
+      authEl.hidden = false;
+      uname.textContent = '';
+      uimg.hidden = true;
+      uimg.removeAttribute('src');
+      uini.hidden = true;
+      uini.textContent = '';
+      auditEl.hidden = true;
+      idToken = null;
+      rewatchBtn.hidden = true;
+      closeReplay()
+    }
+    function showGame(user) {
+      const name = user.displayName || user.email || '';
+      uname.textContent = name;
+      setAvatar(user.photoURL, name);
+      errEl.textContent = '';
+      authEl.hidden = true;
+      gameEl.hidden = false;
+      showTab('scr-play');
+      renderHistory([]);
+      window.gameGate.enter();
+      syncSession()
+    }
+
+    let cfg;
+    try {
+      cfg = (await import('./firebase-config.js')).firebaseConfig
+    } catch {
+      fail('ไม่พบ firebase-config.js — คัดลอกจาก firebase-config.example.js แล้วใส่ค่า Firebase จริงของคุณ')
+    }
+    if (cfg && String(cfg.apiKey || '').startsWith('YOUR_'))
+      fail('firebase-config.js ยังเป็นค่าตัวอย่าง — ใส่ค่า Firebase จริงของคุณ');
+
+    if (cfg && !String(cfg.apiKey || '').startsWith('YOUR_')) {
+      try {
+        const {initializeApp} = await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js');
+        const {getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut} =
+          await import('https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js');
+        auth = getAuth(initializeApp(cfg));
+        const provider = new GoogleAuthProvider();
+
+        gbtn.onclick = async () => {
+          busy(true);
+          errEl.textContent = '';
+          try {
+            await signInWithPopup(auth, provider)
+          } catch (e) {
+            fail(MSG[e.code] || ('เข้าสู่ระบบไม่สำเร็จ: ' + (e.message || e.code || e) + (e.code ? ' (' + e.code + ')' : '')))
+          } finally {
+            busy(false)
+          }
+        };
+        document.getElementById('out').onclick = () => signOut(auth);
+        window.gameGate.onEnd(g => {
+          lastLocal = g;
+          rewatchBtn.hidden = false;
+          postGame(g)
+        });
+        onAuthStateChanged(auth, user => user ? showGame(user) : showAuth())
+      } catch (e) {
+        fail('โหลด Firebase ไม่สำเร็จ: ' + (e.message || e))
+      }
+    }
+  </script>
+</body>
+
+</html>
